@@ -1,0 +1,1 @@
+VACUUM FULL Accident_information;

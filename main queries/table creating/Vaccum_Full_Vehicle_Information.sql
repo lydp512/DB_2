@@ -1,0 +1,1 @@
+VACUUM FULL Vehicle_information;

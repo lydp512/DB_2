@@ -1,0 +1,1 @@
+CREATE INDEX accident_category ON Accident_Information(First_Road_Class,Accident_Severity) 

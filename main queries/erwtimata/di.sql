@@ -1,0 +1,1 @@
+CREATE INDEX find_road_class_accidents ON Accident_Information(First_Road_Class);

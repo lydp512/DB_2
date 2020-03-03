@@ -1,0 +1,195 @@
+﻿/*
+
+--Table creation
+
+CREATE TABLE  Accident_Information
+(ID INT,Accident_Index VARCHAR,First_Road_Class VARCHAR,
+ Accident_Severity VARCHAR,Accident_Date DATE,
+ Urban_or_Rural_Area VARCHAR,Weather_Conditions VARCHAR,
+ Accident_Year INT,InScotland VARCHAR,
+ PRIMARY KEY (ID));
+
+CREATE TABLE  Vehicle_Information
+(ID INT,Accident_Index VARCHAR,Age_Band_of_Driver VARCHAR,
+ Age_of_Vehicle VARCHAR, Maker VARCHAR,Model VARCHAR,
+ Sex_of_Driver VARCHAR,Vehicle_Type VARCHAR,
+ PRIMARY KEY (ID));
+
+COPY Vehicle_Information 
+FROM '/home/lydia/Documents/sql ergasia 219/db2_Vehicle_Information.csv' DELIMITER ',' CSV HEADER encoding 'windows-1251';
+
+COPY Accident_Information 
+FROM '/home/lydia/Documents/sql ergasia 219/db2_Accident_Information.csv' DELIMITER ',' CSV HEADER; 
+
+--vacuum
+
+VACUUM FULL Vehicle_Information;
+VACUUM FULL Accident_information; 
+
+--start of queries
+
+
+--first one
+SELECT COUNT(Accident_Index),First_Road_Class
+FROM Accident_Information GROUP BY First_Road_Class; 689 ms
+
+--second
+
+(SELECT COUNT(Accident_Index),First_Road_Class
+FROM Accident_Information GROUP BY First_Road_Class)
+UNION
+(SELECT COUNT(Accident_Index),Accident_Severity
+FROM Accident_Information GROUP BY Accident_Severity); 1420 ms 
+
+--third
+
+SELECT COUNT(Accident_Information.Accident_Index) FROM Accident_Information 
+FULL OUTER JOIN Vehicle_Information 
+ON Vehicle_Information.ID=Accident_Information.ID
+WHERE 
+  URBAN_OR_RURAL_AREA ='Urban' AND Accident_Date<'1/1/2010' AND
+  Age_Band_of_Driver='26 - 35'; 1489 ms 
+
+
+--fourth
+
+  SELECT COUNT(Accident_Information.Accident_Index) FROM Accident_Information 
+FULL OUTER JOIN Vehicle_Information 
+ON Vehicle_Information.ID=Accident_Information.ID
+WHERE 
+  URBAN_OR_RURAL_AREA ='Rural' AND Accident_Year='2012' AND
+  Age_Band_of_Driver='36 - 45'; 1136 ms
+
+--fifth
+
+ SELECT Maker FROM Vehicle_Information 
+FULL OUTER JOIN Accident_Information 
+ON Vehicle_Information.ID=Accident_Information.ID
+WHERE 
+  (Accident_Year = '2010' OR Accident_Year = '2011' OR Accident_Year = '2012') AND
+  Age_Band_of_Driver='26 - 35' AND First_Road_Class='A' ORDER BY Maker DESC
+    LIMIT    1; 1217 ms 
+
+--CPU USAGE
+
+SET max_parallel_workers_per_gather TO 4;  
+
+--INDEXING
+
+--First
+CREATE INDEX find_road_class_accidents ON Accident_Information USING HASH (First_Road_Class); 
+
+--second
+CREATE INDEX accident_category ON Accident_Information(First_Road_Class,Accident_Severity) 
+
+
+--third
+CREATE INDEX urban_and_date ON Accident_Information(Accident_date);
+CREATE INDEX age_of_driver ON Vehicle_Information(Age_Band_of_Driver); 
+
+
+--fourth
+--The previous index "age_of_driver" is sufficient for this search as well. Therefore, only one new index will be created.
+CREATE INDEX year_of_acc ON Accident_Information(Accident_Year); 
+
+
+--fifth
+DROP INDEX age_of_driver;
+--The previous index "year_of_acc" is sufficient for this search as well. Therefore, only one new index will be created.
+CREATE INDEX age_and_maker ON Vehicle_Information(Age_Band_of_Driver,Maker); 
+
+CREATE TABLE year_of_crash_2005 (
+CHECK (Accident_Year < 2006  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2006 (
+CHECK ( Accident_Year >= 2006 AND Accident_Year < 2007  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2007 (
+CHECK ( Accident_Year >= 2007 AND Accident_Year < 2008  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2008 (
+CHECK ( Accident_Year >= 2008 AND Accident_Year < 2009  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2009 (
+CHECK ( Accident_Year >= 2009 AND Accident_Year < 2010  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2010 (
+CHECK ( Accident_Year >= 2010 AND Accident_Year < 2011  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2011 (
+CHECK ( Accident_Year >= 2011 AND Accident_Year < 2012  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2012 (
+CHECK ( Accident_Year >= 2012 AND Accident_Year < 2013  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2013 (
+CHECK ( Accident_Year >= 2013 AND Accident_Year < 2014  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2014 (
+CHECK ( Accident_Year >= 2014 AND Accident_Year < 2015  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2015 (
+CHECK ( Accident_Year >= 2015 AND Accident_Year < 2016  )
+) INHERITS (Accident_Information);
+
+CREATE TABLE year_of_crash_2016 (
+CHECK ( Accident_Year >= 2016)
+) INHERITS (Accident_Information); 
+
+CREATE TABLE invalid_data_or_too_young (
+CHECK (age_band_of_driver='Data missing or out of range' OR age_band_of_driver='0 - 5' OR age_band_of_driver='6 - 10' OR 
+       age_band_of_driver='11 - 15')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_16_to_20 (
+CHECK (age_band_of_driver='16 - 20')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_21_to_25 (
+CHECK (age_band_of_driver='21 - 25')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_26_to_35 (
+CHECK (age_band_of_driver='26 - 35')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_36_to_45 (
+CHECK (age_band_of_driver='36 - 45')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_46_to_55 (
+CHECK (age_band_of_driver='46 - 55')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_56_to_65 (
+CHECK (age_band_of_driver='56 - 65')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_66_to_75 (
+CHECK (age_band_of_driver='66 - 75')
+) INHERITS (Vehicle_Information);
+
+CREATE TABLE age_over_75 (
+CHECK (age_band_of_driver='Over 75')
+) INHERITS (Vehicle_Information); */
+
+CREATE INDEX maker_index ON Vehicle_Information(Maker); 
+CREATE INDEX road_clas ON Accident_Information(First_Road_Class);
+
+EXPLAIN ANALYZE SELECT Maker FROM Vehicle_Information 
+FULL OUTER JOIN Accident_Information 
+ON Vehicle_Information.ID=Accident_Information.ID
+WHERE 
+  (Accident_Year = '2010' OR Accident_Year = '2011' OR Accident_Year = '2012') AND
+  Age_Band_of_Driver='26 - 35' AND First_Road_Class='A' ORDER BY Maker DESC
+    LIMIT    1;
